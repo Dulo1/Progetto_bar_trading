@@ -1,19 +1,16 @@
-// in cima al file src/index.ts
+// src/index.ts
 import express from 'express';
-import authRoutes from './routes/auth.routes'; // <-- IMPORTA LE ROTTE
-
-// ... altro codice (pool, etc.)...
+import cors from 'cors'; // <-- RIGA MANCANTE: Importa cors
+import 'dotenv/config';
+import authRoutes from './routes/auth.routes';
 
 const app = express();
+const port = process.env.PORT || 3000; // <-- RIGA MANCANTE: Definisce la porta
 
-// Middleware per leggere il JSON dal corpo delle richieste
-app.use(express.json()); 
 app.use(cors());
+app.use(express.json());
 
-// ... codice per la connessione al db ...
-
-// USA LE ROTTE: tutte le rotte in auth.routes.ts saranno precedute da /api
-app.use('/api', authRoutes); // <-- USA LE ROTTE
+app.use('/api', authRoutes);
 
 app.listen(port, () => {
     console.log(`🚀 Server in ascolto sulla porta ${port}`);
