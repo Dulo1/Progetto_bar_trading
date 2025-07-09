@@ -36,9 +36,6 @@ export const createAdmin = async (req: Request, res: Response) => {
     }
 };
 
-// Lasciamo questa vuota per il prossimo passo
-export const login = async (_req: Request, _res: Response) => { };
-
 // Aggiungeremo qui la funzione di login più tardi
 export const login = async (_req: Request, _res: Response) => {
     // ... logica per il login ...
