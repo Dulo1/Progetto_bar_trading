@@ -1,41 +1,58 @@
 // src/App.tsx
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { SetupPage } from './pages/SetupPage';
+import { LoginPage } from './pages/LoginPage';
+
+// Un semplice componente per la dashboard
+function Dashboard() {
+  const handleLogout = () => {
+    localStorage.removeItem('authToken');
+    window.location.reload();
+  };
+
+  return (
+    <div className="bg-gray-900 text-white min-h-screen flex flex-col items-center justify-center">
+        <h1 className="text-4xl font-bold text-green-400">Login Effettuato!</h1>
+        <p className="mt-4">Benvenuto nella Dashboard.</p>
+        <button 
+          onClick={handleLogout}
+          className="mt-8 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+        >
+          Logout
+        </button>
+    </div>
+  );
+}
 
 function App() {
-  // Stato per sapere se stiamo ancora caricando i dati dal server
   const [isLoading, setIsLoading] = useState(true);
-  
-  // Stato per sapere se la configurazione iniziale è necessaria
   const [isSetupNeeded, setIsSetupNeeded] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false); // Nuovo stato
 
-  // useEffect viene eseguito una sola volta quando il componente appare
   useEffect(() => {
+    // Controlla se c'è un token nel localStorage
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      setIsAuthenticated(true);
+    }
+    
     // Funzione per controllare lo stato del setup
     const checkSetupStatus = async () => {
       try {
-        // Chiamiamo il nostro backend all'endpoint che abbiamo creato
         const response = await axios.get('http://localhost:3000/api/setup/status');
-        
-        // Aggiorniamo lo stato in base alla risposta del server
         setIsSetupNeeded(response.data.setupNeeded);
-
       } catch (error) {
-        // Se c'è un errore (es. il backend non risponde), lo mostriamo nella console
         console.error("Errore nel contattare il server:", error);
         alert("Impossibile connettersi al server. Assicurati che il backend sia in esecuzione.");
       } finally {
-        // In ogni caso, abbiamo finito di caricare
         setIsLoading(false);
       }
     };
 
     checkSetupStatus();
-  }, []); // Le parentesi quadre vuote significano: "esegui questo effetto solo una volta"
+  }, []);
 
-  // --- Logica di Visualizzazione ---
-
-  // 1. Mostra un messaggio di caricamento mentre aspettiamo la risposta dal server
   if (isLoading) {
     return (
       <div className="bg-gray-900 text-white min-h-screen flex items-center justify-center">
@@ -44,12 +61,16 @@ function App() {
     );
   }
 
-  // 2. Se il caricamento è finito, mostra la pagina giusta
-  if (isSetupNeeded) {
-    return <div>Pagina di Setup per il Manager</div>; // Creeremo questa pagina tra poco
-  } else {
-    return <div>Pagina di Login</div>; // E anche questa
+  // --- Nuova logica di visualizzazione ---
+  if (isAuthenticated) {
+    return <Dashboard />;
   }
+  
+  if (isSetupNeeded) {
+    return <SetupPage />;
+  }
+
+  return <LoginPage />;
 }
 
 export default App;
