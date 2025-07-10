@@ -2,14 +2,21 @@
 import { useState } from 'react';
 import axios from 'axios';
 
-// Nota: Creeremo un file per gestire lo stato di autenticazione in un secondo momento
-// Per ora salviamo il token nel localStorage del browser.
-const handleLoginSuccess = (token: string) => {
-  localStorage.setItem('authToken', token);
-  window.location.reload(); // Ricarica la pagina per mostrare l'interfaccia corretta
+// Aggiungi un nuovo tipo per l'utente, così TypeScript sa come è fatto
+type User = {
+  id: number;
+  username: string;
+  role: string;
 };
 
-export function LoginPage() {
+// Modifica la funzione per accettare i dati dell'utente e una funzione di callback
+const handleLoginSuccess = (token: string, user: User, onLogin: (user: User) => void) => {
+  localStorage.setItem('authToken', token);
+  onLogin(user); // Chiama la funzione passata da App.tsx
+};
+
+
+export function LoginPage({ onLogin }: { onLogin: (user: User) => void }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -21,14 +28,12 @@ export function LoginPage() {
     setIsLoading(true);
 
     try {
-      const response = await axios.post('http://localhost:3000/api/login', {
+      const response = await axios.post('http://localhost:3000/api/auth/login', {
         username,
         password,
       });
-
-      // Se il login ha successo, salviamo il token
-      handleLoginSuccess(response.data.token);
-
+      // Passiamo sia il token che i dati dell'utente
+      handleLoginSuccess(response.data.token, response.data.user, onLogin);
     } catch (err) {
       setError('Credenziali non valide. Riprova.');
       console.error(err);
