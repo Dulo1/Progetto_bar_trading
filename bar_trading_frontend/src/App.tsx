@@ -4,41 +4,63 @@ import axios from 'axios';
 import { SetupPage } from './pages/SetupPage';
 import { LoginPage } from './pages/LoginPage';
 
-// Un semplice componente per la dashboard
-function Dashboard() {
-  const handleLogout = () => {
-    localStorage.removeItem('authToken');
-    window.location.reload();
-  };
+// Definiamo il tipo User anche qui
+type User = {
+  id: number;
+  username: string;
+  role: string;
+};
 
+// Creiamo dei componenti placeholder per le dashboard
+function ManagerDashboard({ user, onLogout }: { user: User, onLogout: () => void }) {
   return (
-    <div className="bg-gray-900 text-white min-h-screen flex flex-col items-center justify-center">
-        <h1 className="text-4xl font-bold text-green-400">Login Effettuato!</h1>
-        <p className="mt-4">Benvenuto nella Dashboard.</p>
-        <button 
-          onClick={handleLogout}
-          className="mt-8 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
-        >
-          Logout
-        </button>
+    <div className="p-8 text-white">
+      <h1 className="text-3xl">Dashboard Manager</h1>
+      <p>Benvenuto, {user.username}!</p>
+      <button onClick={onLogout} className="mt-4 bg-red-600 p-2 rounded">Logout</button>
     </div>
-  );
+  )
 }
+
+function BaristaDashboard({ user, onLogout }: { user: User, onLogout: () => void }) {
+  return (
+    <div className="p-8 text-white">
+      <h1 className="text-3xl">Interfaccia Bancone</h1>
+      <p>Barista: {user.username}</p>
+      <button onClick={onLogout} className="mt-4 bg-red-600 p-2 rounded">Logout</button>
+    </div>
+  )
+}
+
 
 function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSetupNeeded, setIsSetupNeeded] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false); // Nuovo stato
+  // Modifichiamo lo stato: ora memorizza l'oggetto user completo o null
+  const [user, setUser] = useState<User | null>(null);
+
+  // Questa funzione verrà chiamata al login e al caricamento della pagina se il token esiste
+  const fetchUserFromToken = async (token: string) => {
+    try {
+      // Creeremo questo endpoint nel backend per validare un token e ottenere i dati dell'utente
+      const response = await axios.get('http://localhost:3000/api/auth/me', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setUser(response.data.user);
+    } catch (error) {
+      console.error("Token non valido o scaduto", error);
+      localStorage.removeItem('authToken'); // Rimuovi il token non valido
+    }
+  }
 
   useEffect(() => {
-    // Controlla se c'è un token nel localStorage
     const token = localStorage.getItem('authToken');
     if (token) {
-      setIsAuthenticated(true);
+      fetchUserFromToken(token); // Se troviamo un token, proviamo a validarlo
     }
-    
-    // Funzione per controllare lo stato del setup
+
     const checkSetupStatus = async () => {
+      // ... la logica di checkSetupStatus rimane la stessa ...
       try {
         const response = await axios.get('http://localhost:3000/api/setup/status');
         setIsSetupNeeded(response.data.setupNeeded);
@@ -49,28 +71,32 @@ function App() {
         setIsLoading(false);
       }
     };
-
     checkSetupStatus();
   }, []);
 
-  if (isLoading) {
-    return (
-      <div className="bg-gray-900 text-white min-h-screen flex items-center justify-center">
-        <h1 className="text-3xl font-bold">Caricamento...</h1>
-      </div>
-    );
-  }
+  const handleLogout = () => {
+    localStorage.removeItem('authToken');
+    setUser(null);
+  };
 
-  // --- Nuova logica di visualizzazione ---
-  if (isAuthenticated) {
-    return <Dashboard />;
+  // --- Logica di Visualizzazione basata sul ruolo ---
+  if (isLoading) {
+    return <div>Caricamento...</div>;
   }
   
+  if (user) { // Se l'utente è loggato
+    if (user.role === 'manager') {
+      return <ManagerDashboard user={user} onLogout={handleLogout} />;
+    } else {
+      return <BaristaDashboard user={user} onLogout={handleLogout} />;
+    }
+  }
+
   if (isSetupNeeded) {
     return <SetupPage />;
   }
 
-  return <LoginPage />;
+  return <LoginPage onLogin={setUser} />;
 }
 
 export default App;
