@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { SetupPage } from './pages/SetupPage';
 import { LoginPage } from './pages/LoginPage';
+import { ManagerDashboard } from './pages/ManagerDashboard';
 
 // Definiamo il tipo User anche qui
 type User = {
@@ -12,15 +13,6 @@ type User = {
 };
 
 // Creiamo dei componenti placeholder per le dashboard
-function ManagerDashboard({ user, onLogout }: { user: User, onLogout: () => void }) {
-  return (
-    <div className="p-8 text-white">
-      <h1 className="text-3xl">Dashboard Manager</h1>
-      <p>Benvenuto, {user.username}!</p>
-      <button onClick={onLogout} className="mt-4 bg-red-600 p-2 rounded">Logout</button>
-    </div>
-  )
-}
 
 function BaristaDashboard({ user, onLogout }: { user: User, onLogout: () => void }) {
   return (
